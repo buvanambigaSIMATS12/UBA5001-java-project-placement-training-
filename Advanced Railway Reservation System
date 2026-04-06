@@ -1,0 +1,323 @@
+import java.util.*;
+import java.io.*;
+
+class Passenger implements Serializable {
+    int id;
+    String name;
+    int age;
+    String gender;
+    String preference;
+
+    Passenger(int id, String name, int age, String gender, String pref) {
+        this.id = id;
+        this.name = name;
+        this.age = age;
+        this.gender = gender;
+        this.preference = pref;
+    }
+}
+
+class Ticket implements Serializable {
+    String pnr;
+    Passenger passenger;
+    String train;
+    String coach;
+    String seatType;
+    String status;
+    long time;
+
+    Ticket(String pnr, Passenger p, String train, String coach) {
+        this.pnr = pnr;
+        this.passenger = p;
+        this.train = train;
+        this.coach = coach;
+        this.time = System.currentTimeMillis();
+    }
+}
+
+class Coach implements Serializable {
+    String type;
+    int maxSeats = 10;
+
+    List<Ticket> confirmed = new ArrayList<>();
+    Queue<Ticket> rac = new LinkedList<>();
+    Queue<Ticket> wl = new LinkedList<>();
+
+    Coach(String type) {
+        this.type = type;
+    }
+
+    String getSeatType(int index) {
+        if (index % 3 == 0) return "LOWER";
+        else if (index % 3 == 1) return "MIDDLE";
+        else return "UPPER";
+    }
+}
+
+class Train implements Serializable {
+    String name;
+    List<Coach> coaches = new ArrayList<>();
+
+    Train(String name) {
+        this.name = name;
+        coaches.add(new Coach("AC"));
+        coaches.add(new Coach("NONAC"));
+        coaches.add(new Coach("SEATER"));
+    }
+}
+
+class FileDB {
+    static final String FILE = "railway.db";
+
+    static void save(Map<String, Ticket> db) {
+        try {
+            ObjectOutputStream out = new ObjectOutputStream(new FileOutputStream(FILE));
+            out.writeObject(db);
+            out.close();
+        } catch (Exception e) {
+            System.out.println("Error saving data");
+        }
+    }
+
+    static Map<String, Ticket> load() {
+        try {
+            ObjectInputStream in = new ObjectInputStream(new FileInputStream(FILE));
+            Map<String, Ticket> db = (Map<String, Ticket>) in.readObject();
+            in.close();
+            return db;
+        } catch (Exception e) {
+            return new HashMap<>();
+        }
+    }
+}
+
+class RailwaySystem {
+
+    Map<String, Ticket> db = FileDB.load();
+    List<Train> trains = new ArrayList<>();
+
+    Scanner sc = new Scanner(System.in);
+    int passengerId = 1;
+
+    RailwaySystem() {
+        trains.add(new Train("Express"));
+        trains.add(new Train("SuperFast"));
+    }
+
+    String generatePNR() {
+        return "PNR" + (10000 + db.size());
+    }
+
+    Passenger getPassengerInput() {
+        System.out.print("Enter Name: ");
+        String name = sc.next();
+
+        System.out.print("Enter Age: ");
+        int age = sc.nextInt();
+
+        System.out.print("Enter Gender: ");
+        String gender = sc.next();
+
+        System.out.print("Enter Berth Preference (L/M/U): ");
+        String pref = sc.next();
+
+        return new Passenger(passengerId++, name, age, gender, pref);
+    }
+
+    void bookTicket() {
+        Passenger p = getPassengerInput();
+
+        System.out.println("\nSelect Train:");
+        for (int i = 0; i < trains.size(); i++) {
+            System.out.println(i + " -> " + trains.get(i).name);
+        }
+
+        System.out.print("Enter Train Index: ");
+        int tIndex = sc.nextInt();
+
+        Train train = trains.get(tIndex);
+
+        System.out.print("Enter Coach Type (AC/NONAC/SEATER): ");
+        String coachType = sc.next();
+
+        for (Coach c : train.coaches) {
+            if (c.type.equalsIgnoreCase(coachType)) {
+
+                String pnr = generatePNR();
+                Ticket ticket = new Ticket(pnr, p, train.name, coachType);
+
+                if (c.confirmed.size() < c.maxSeats) {
+                    ticket.status = "CONFIRMED";
+                    ticket.seatType = c.getSeatType(c.confirmed.size());
+                    c.confirmed.add(ticket);
+                } 
+                else if (c.rac.size() < 5) {
+                    ticket.status = "RAC";
+                    c.rac.add(ticket);
+                } 
+                else if (c.wl.size() < 5) {
+                    ticket.status = "WAITING";
+                    c.wl.add(ticket);
+                } 
+                else {
+                    System.out.println("❌ No Seats Available");
+                    return;
+                }
+
+                db.put(pnr, ticket);
+                FileDB.save(db);
+
+                System.out.println("\n✅ Ticket Booked Successfully!");
+                System.out.println("PNR: " + pnr + " | Status: " + ticket.status);
+                return;
+            }
+        }
+
+        System.out.println("Invalid Coach Type!");
+    }
+
+    void cancelTicket() {
+        System.out.print("Enter PNR to Cancel: ");
+        String pnr = sc.next();
+
+        if (!db.containsKey(pnr)) {
+            System.out.println("❌ Invalid PNR");
+            return;
+        }
+
+        Ticket t = db.get(pnr);
+
+        for (Train tr : trains) {
+            for (Coach c : tr.coaches) {
+
+                if (!c.type.equalsIgnoreCase(t.coach)) continue;
+
+                if (t.status.equals("CONFIRMED")) {
+                    c.confirmed.remove(t);
+
+                    if (!c.rac.isEmpty()) {
+                        Ticket racT = c.rac.poll();
+                        racT.status = "CONFIRMED";
+                        racT.seatType = c.getSeatType(c.confirmed.size());
+                        c.confirmed.add(racT);
+
+                        if (!c.wl.isEmpty()) {
+                            Ticket wlT = c.wl.poll();
+                            wlT.status = "RAC";
+                            c.rac.add(wlT);
+                        }
+                    }
+                } 
+                else if (t.status.equals("RAC")) {
+                    c.rac.remove(t);
+                } 
+                else {
+                    c.wl.remove(t);
+                }
+            }
+        }
+
+        db.remove(pnr);
+        FileDB.save(db);
+
+        System.out.println("✅ Ticket Cancelled Successfully");
+    }
+
+    void printTicket() {
+        System.out.print("Enter PNR: ");
+        String pnr = sc.next();
+
+        if (!db.containsKey(pnr)) {
+            System.out.println("❌ Invalid PNR");
+            return;
+        }
+
+        Ticket t = db.get(pnr);
+
+        System.out.println("\n========= TICKET =========");
+        System.out.println("PNR        : " + t.pnr);
+        System.out.println("Name       : " + t.passenger.name);
+        System.out.println("Age        : " + t.passenger.age);
+        System.out.println("Gender     : " + t.passenger.gender);
+        System.out.println("Train      : " + t.train);
+        System.out.println("Coach      : " + t.coach);
+        System.out.println("Status     : " + t.status);
+
+        if (t.status.equals("CONFIRMED")) {
+            System.out.println("Seat Type  : " + t.seatType);
+        }
+
+        System.out.println("==========================\n");
+    }
+
+    void searchPassenger() {
+        System.out.print("Enter Passenger Name: ");
+        String name = sc.next();
+
+        boolean found = false;
+
+        for (Ticket t : db.values()) {
+            if (t.passenger.name.equalsIgnoreCase(name)) {
+                System.out.println("PNR: " + t.pnr + " | Status: " + t.status);
+                found = true;
+            }
+        }
+
+        if (!found) {
+            System.out.println("No Passenger Found");
+        }
+    }
+
+    void adminView() {
+        System.out.println("\n------ ADMIN VIEW ------");
+
+        for (Ticket t : db.values()) {
+            System.out.println(t.pnr + " | " + t.passenger.name + " | " + t.status);
+        }
+    }
+
+    void addTrain() {
+        System.out.print("Enter New Train Name: ");
+        String name = sc.next();
+
+        trains.add(new Train(name));
+        System.out.println("✅ Train Added Successfully");
+    }
+
+    void menu() {
+        while (true) {
+            System.out.println("\n===== RAILWAY SYSTEM =====");
+            System.out.println("1. Book Ticket");
+            System.out.println("2. Cancel Ticket");
+            System.out.println("3. Print Ticket");
+            System.out.println("4. Search Passenger");
+            System.out.println("5. Admin View");
+            System.out.println("6. Add Train");
+            System.out.println("7. Exit");
+
+            System.out.print("Enter your choice: ");
+            int choice = sc.nextInt();
+
+            switch (choice) {
+                case 1: bookTicket(); break;
+                case 2: cancelTicket(); break;
+                case 3: printTicket(); break;
+                case 4: searchPassenger(); break;
+                case 5: adminView(); break;
+                case 6: addTrain(); break;
+                case 7:
+                    System.out.println("Thank You!");
+                    return;
+                default:
+                    System.out.println("Invalid Choice!");
+            }
+        }
+    }
+}
+
+public class Main {
+    public static void main(String[] args) {
+        RailwaySystem system = new RailwaySystem();
+        system.menu();
+    }
+}
