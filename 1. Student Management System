@@ -1,0 +1,236 @@
+import java.util.*;
+
+class Student {
+    private int id;
+    private String name;
+    private ArrayList<Float> marks;
+    private float average;
+    private char grade;
+
+    public Student(int id, String name, ArrayList<Float> marks) {
+        this.id = id;
+        this.name = name;
+        this.marks = marks;
+        calculateAverage();
+        calculateGrade();
+    }
+
+    public int getId() { return id; }
+    public String getName() { return name; }
+    public float getAverage() { return average; }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public void setMarks(ArrayList<Float> marks) {
+        this.marks = marks;
+        calculateAverage();
+        calculateGrade();
+    }
+
+    public void calculateAverage() {
+        float sum = 0;
+        for(float m : marks) sum += m;
+        average = sum / marks.size();
+    }
+
+    public void calculateGrade() {
+        if(average >= 90) grade = 'A';
+        else if(average >= 75) grade = 'B';
+        else if(average >= 50) grade = 'C';
+        else grade = 'F';
+    }
+
+    public void display() {
+        System.out.println("\nID: " + id);
+        System.out.println("Name: " + name);
+        System.out.println("Marks: " + marks);
+        System.out.println("Average: " + average);
+        System.out.println("Grade: " + grade);
+    }
+}
+
+class StudentManager {
+    private ArrayList<Student> students = new ArrayList<>();
+    private Scanner sc = new Scanner(System.in);
+
+    public void addStudent() {
+        try {
+            System.out.print("Enter ID: ");
+            int id = sc.nextInt();
+            sc.nextLine();
+
+            if(findStudent(id) != null) {
+                System.out.println("ID already exists!");
+                return;
+            }
+
+            System.out.print("Enter Name: ");
+            String name = sc.nextLine();
+
+            System.out.print("Enter number of subjects: ");
+            int n = sc.nextInt();
+
+            if(n <= 0) {
+                System.out.println("Invalid subject count!");
+                return;
+            }
+
+            ArrayList<Float> marks = new ArrayList<>();
+            for(int i = 0; i < n; i++) {
+                System.out.print("Enter mark " + (i+1) + ": ");
+                float m = sc.nextFloat();
+
+                if(m < 0 || m > 100) {
+                    System.out.println("Invalid marks!");
+                    return;
+                }
+                marks.add(m);
+            }
+
+            Student s = new Student(id, name, marks);
+            students.add(s);
+
+            System.out.println("Student added successfully!");
+
+        } catch(Exception e) {
+            System.out.println("Invalid input!");
+            sc.nextLine();
+        }
+    }
+
+    public void displayAll() {
+        if(students.isEmpty()) {
+            System.out.println("No students found!");
+            return;
+        }
+
+        for(Student s : students) {
+            s.display();
+        }
+    }
+
+    public Student findStudent(int id) {
+        for(Student s : students) {
+            if(s.getId() == id)
+                return s;
+        }
+        return null;
+    }
+
+    public void searchStudent() {
+        System.out.print("Enter ID to search: ");
+        int id = sc.nextInt();
+
+        Student s = findStudent(id);
+        if(s != null) {
+            s.display();
+        } else {
+            System.out.println("Student not found!");
+        }
+    }
+
+    public void updateStudent() {
+        System.out.print("Enter ID to update: ");
+        int id = sc.nextInt();
+        sc.nextLine();
+
+        Student s = findStudent(id);
+
+        if(s == null) {
+            System.out.println("Student not found!");
+            return;
+        }
+
+        System.out.println("1. Update Name");
+        System.out.println("2. Update Marks");
+        int choice = sc.nextInt();
+        sc.nextLine();
+
+        if(choice == 1) {
+            System.out.print("Enter new name: ");
+            String name = sc.nextLine();
+            s.setName(name);
+            System.out.println("Name updated!");
+
+        } else if(choice == 2) {
+            System.out.print("Enter number of subjects: ");
+            int n = sc.nextInt();
+
+            ArrayList<Float> marks = new ArrayList<>();
+            for(int i = 0; i < n; i++) {
+                System.out.print("Enter mark " + (i+1) + ": ");
+                marks.add(sc.nextFloat());
+            }
+
+            s.setMarks(marks);
+            System.out.println("Marks updated!");
+
+        } else {
+            System.out.println("Invalid choice!");
+        }
+    }
+
+    public void deleteStudent() {
+        System.out.print("Enter ID to delete: ");
+        int id = sc.nextInt();
+
+        Student s = findStudent(id);
+
+        if(s != null) {
+            students.remove(s);
+            System.out.println("Student deleted!");
+        } else {
+            System.out.println("Student not found!");
+        }
+    }
+
+    public void sortStudents() {
+        students.sort((a, b) -> Float.compare(b.getAverage(), a.getAverage()));
+        System.out.println("Sorted by average");
+    }
+}
+
+public class MainApp {
+    public static void main(String[] args) {
+        Scanner sc = new Scanner(System.in);
+        StudentManager sm = new StudentManager();
+
+        while(true) {
+            System.out.println("\n===== STUDENT MANAGEMENT SYSTEM =====");
+            System.out.println("1. Add Student");
+            System.out.println("2. Display All");
+            System.out.println("3. Search Student");
+            System.out.println("4. Update Student");
+            System.out.println("5. Delete Student");
+            System.out.println("6. Sort by Average");
+            System.out.println("7. Exit");
+
+            System.out.print("Enter choice: ");
+
+            int choice;
+            try {
+                choice = sc.nextInt();
+            } catch(Exception e) {
+                System.out.println("Invalid input!");
+                sc.nextLine();
+                continue;
+            }
+
+            switch(choice) {
+                case 1: sm.addStudent(); break;
+                case 2: sm.displayAll(); break;
+                case 3: sm.searchStudent(); break;
+                case 4: sm.updateStudent(); break;
+                case 5: sm.deleteStudent(); break;
+                case 6: sm.sortStudents(); break;
+                case 7:
+                    System.out.println("Exiting...");
+                    return;
+                default:
+                    System.out.println("Invalid choice!");
+            }
+        }
+    }
+}
