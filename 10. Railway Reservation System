@@ -1,0 +1,128 @@
+import java.util.*;
+
+class Ticket {
+    private int ticketId;
+    private String passengerName;
+    private int seatNumber;
+
+    public Ticket(int ticketId, String passengerName, int seatNumber) {
+        this.ticketId = ticketId;
+        this.passengerName = passengerName;
+        this.seatNumber = seatNumber;
+    }
+
+    public int getTicketId() { return ticketId; }
+
+    public void display() {
+        System.out.println("Ticket ID: " + ticketId);
+        System.out.println("Passenger: " + passengerName);
+        System.out.println("Seat No: " + seatNumber);
+    }
+}
+
+class Train {
+    private int trainNo;
+    private String trainName;
+    private int totalSeats;
+    private ArrayList<Ticket> bookings = new ArrayList<>();
+    private int nextSeat = 1;
+    private int ticketCounter = 1000;
+
+    public Train(int trainNo, String trainName, int totalSeats) {
+        this.trainNo = trainNo;
+        this.trainName = trainName;
+        this.totalSeats = totalSeats;
+    }
+
+    public void bookTicket(String name) {
+        if(nextSeat > totalSeats) {
+            System.out.println("No seats available!");
+            return;
+        }
+
+        Ticket t = new Ticket(ticketCounter++, name, nextSeat++);
+        bookings.add(t);
+
+        System.out.println("Ticket booked successfully!");
+        t.display();
+    }
+
+    public void cancelTicket(int id) {
+        Ticket found = null;
+
+        for(Ticket t : bookings) {
+            if(t.getTicketId() == id) {
+                found = t;
+                break;
+            }
+        }
+
+        if(found != null) {
+            bookings.remove(found);
+            System.out.println("Ticket cancelled!");
+        } else {
+            System.out.println("Ticket not found!");
+        }
+    }
+
+    public void showAvailability() {
+        int booked = bookings.size();
+        int available = totalSeats - booked;
+
+        System.out.println("Train: " + trainName);
+        System.out.println("Total Seats: " + totalSeats);
+        System.out.println("Booked: " + booked);
+        System.out.println("Available: " + available);
+    }
+}
+
+class RailwaySystem {
+    private Scanner sc = new Scanner(System.in);
+    private Train train = new Train(101, "Express", 5);
+
+    public void menu() {
+        while(true) {
+            System.out.println("\n===== RAILWAY SYSTEM =====");
+            System.out.println("1. Book Ticket");
+            System.out.println("2. Cancel Ticket");
+            System.out.println("3. View Availability");
+            System.out.println("4. Exit");
+
+            System.out.print("Enter choice: ");
+            int ch = sc.nextInt();
+            sc.nextLine();
+
+            switch(ch) {
+                case 1:
+                    System.out.print("Enter Passenger Name: ");
+                    String name = sc.nextLine();
+                    train.bookTicket(name);
+                    break;
+
+                case 2:
+                    System.out.print("Enter Ticket ID: ");
+                    int id = sc.nextInt();
+                    train.cancelTicket(id);
+                    break;
+
+                case 3:
+                    train.showAvailability();
+                    break;
+
+                case 4:
+                    System.out.println("Exiting...");
+                    return;
+
+                default:
+                    System.out.println("Invalid choice!");
+            }
+        }
+    }
+}
+
+public class Main {
+    public static void main(String[] args) {
+        RailwaySystem rs = new RailwaySystem();
+        rs.menu();
+    }
+}
