@@ -1,0 +1,171 @@
+import java.util.*;
+
+class Voter {
+    private int id;
+    private String name;
+    private boolean hasVoted;
+
+    public Voter(int id, String name) {
+        this.id = id;
+        this.name = name;
+        this.hasVoted = false;
+    }
+
+    public int getId() { return id; }
+    public boolean hasVoted() { return hasVoted; }
+
+    public void vote() {
+        hasVoted = true;
+    }
+}
+
+class Candidate {
+    private int id;
+    private String name;
+    private int votes;
+
+    public Candidate(int id, String name) {
+        this.id = id;
+        this.name = name;
+        this.votes = 0;
+    }
+
+    public int getId() { return id; }
+
+    public void addVote() {
+        votes++;
+    }
+
+    public void display() {
+        System.out.println(name + " - Votes: " + votes);
+    }
+}
+
+class VotingSystem {
+    private ArrayList<Voter> voters = new ArrayList<>();
+    private ArrayList<Candidate> candidates = new ArrayList<>();
+    private Scanner sc = new Scanner(System.in);
+
+    public Voter findVoter(int id) {
+        for(Voter v : voters) {
+            if(v.getId() == id)
+                return v;
+        }
+        return null;
+    }
+
+    public Candidate findCandidate(int id) {
+        for(Candidate c : candidates) {
+            if(c.getId() == id)
+                return c;
+        }
+        return null;
+    }
+
+    public void registerVoter() {
+        System.out.print("Enter Voter ID: ");
+        int id = sc.nextInt();
+        sc.nextLine();
+
+        if(findVoter(id) != null) {
+            System.out.println("Voter already exists!");
+            return;
+        }
+
+        System.out.print("Enter Name: ");
+        String name = sc.nextLine();
+
+        voters.add(new Voter(id, name));
+        System.out.println("Voter registered!");
+    }
+
+    public void addCandidate() {
+        System.out.print("Enter Candidate ID: ");
+        int id = sc.nextInt();
+        sc.nextLine();
+
+        if(findCandidate(id) != null) {
+            System.out.println("Candidate already exists!");
+            return;
+        }
+
+        System.out.print("Enter Name: ");
+        String name = sc.nextLine();
+
+        candidates.add(new Candidate(id, name));
+        System.out.println("Candidate added!");
+    }
+
+    public void castVote() {
+        System.out.print("Enter Voter ID: ");
+        int vid = sc.nextInt();
+
+        Voter v = findVoter(vid);
+        if(v == null) {
+            System.out.println("Voter not found!");
+            return;
+        }
+
+        if(v.hasVoted()) {
+            System.out.println("Already voted!");
+            return;
+        }
+
+        System.out.println("Candidates:");
+        for(Candidate c : candidates) {
+            System.out.println(c.getId() + ". " + c);
+        }
+
+        System.out.print("Enter Candidate ID: ");
+        int cid = sc.nextInt();
+
+        Candidate c = findCandidate(cid);
+        if(c == null) {
+            System.out.println("Invalid candidate!");
+            return;
+        }
+
+        c.addVote();
+        v.vote();
+
+        System.out.println("Vote cast successfully!");
+    }
+
+    public void showResults() {
+        for(Candidate c : candidates) {
+            c.display();
+        }
+    }
+}
+
+public class Main {
+    public static void main(String[] args) {
+        Scanner sc = new Scanner(System.in);
+        VotingSystem vs = new VotingSystem();
+
+        vs.addCandidate();
+        vs.addCandidate();
+
+        while(true) {
+            System.out.println("\n===== VOTING SYSTEM =====");
+            System.out.println("1. Register Voter");
+            System.out.println("2. Cast Vote");
+            System.out.println("3. Show Results");
+            System.out.println("4. Exit");
+
+            System.out.print("Enter choice: ");
+            int ch = sc.nextInt();
+
+            switch(ch) {
+                case 1: vs.registerVoter(); break;
+                case 2: vs.castVote(); break;
+                case 3: vs.showResults(); break;
+                case 4:
+                    System.out.println("Exiting...");
+                    return;
+                default:
+                    System.out.println("Invalid choice!");
+            }
+        }
+    }
+}
