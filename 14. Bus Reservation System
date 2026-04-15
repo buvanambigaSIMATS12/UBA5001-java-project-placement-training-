@@ -1,0 +1,188 @@
+import java.util.*;
+
+class Seat {
+    private int seatNo;
+    private boolean isBooked;
+    private String passengerName;
+
+    public Seat(int seatNo) {
+        this.seatNo = seatNo;
+        this.isBooked = false;
+        this.passengerName = "";
+    }
+
+    public int getSeatNo() { return seatNo; }
+    public boolean isBooked() { return isBooked; }
+
+    public void book(String name) {
+        isBooked = true;
+        passengerName = name;
+        System.out.println("Seat booked!");
+    }
+
+    public void cancel() {
+        isBooked = false;
+        passengerName = "";
+        System.out.println("Seat cancelled!");
+    }
+
+    public void display() {
+        System.out.print(isBooked ? "[X]" : "[" + seatNo + "]");
+    }
+}
+
+class Bus {
+    private int busNo;
+    private String busName;
+    private ArrayList<Seat> seats = new ArrayList<>();
+
+    public Bus(int busNo, String busName, int totalSeats) {
+        this.busNo = busNo;
+        this.busName = busName;
+
+        for(int i = 1; i <= totalSeats; i++) {
+            seats.add(new Seat(i));
+        }
+    }
+
+    public int getBusNo() { return busNo; }
+
+    public Seat findSeat(int seatNo) {
+        for(Seat s : seats) {
+            if(s.getSeatNo() == seatNo)
+                return s;
+        }
+        return null;
+    }
+
+    public void bookSeat(int seatNo, String name) {
+        Seat s = findSeat(seatNo);
+
+        if(s == null) {
+            System.out.println("Invalid seat!");
+            return;
+        }
+
+        if(s.isBooked()) {
+            System.out.println("Seat already booked!");
+            return;
+        }
+
+        s.book(name);
+    }
+
+    public void cancelSeat(int seatNo) {
+        Seat s = findSeat(seatNo);
+
+        if(s == null) {
+            System.out.println("Invalid seat!");
+            return;
+        }
+
+        if(!s.isBooked()) {
+            System.out.println("Seat not booked!");
+            return;
+        }
+
+        s.cancel();
+    }
+
+    public void showSeats() {
+        System.out.println("\nBus: " + busName);
+        for(Seat s : seats) {
+            s.display();
+        }
+        System.out.println();
+    }
+}
+
+class BusSystem {
+    private ArrayList<Bus> buses = new ArrayList<>();
+    private Scanner sc = new Scanner(System.in);
+
+    public BusSystem() {
+        buses.add(new Bus(1, "Express", 10));
+        buses.add(new Bus(2, "SuperFast", 8));
+    }
+
+    public Bus findBus(int busNo) {
+        for(Bus b : buses) {
+            if(b.getBusNo() == busNo)
+                return b;
+        }
+        return null;
+    }
+
+    public void menu() {
+        while(true) {
+            System.out.println("\n===== BUS RESERVATION SYSTEM =====");
+            System.out.println("1. Show Seats");
+            System.out.println("2. Book Seat");
+            System.out.println("3. Cancel Seat");
+            System.out.println("4. Exit");
+
+            System.out.print("Enter choice: ");
+            int ch = sc.nextInt();
+
+            switch(ch) {
+                case 1:
+                    System.out.print("Enter Bus No: ");
+                    int bno = sc.nextInt();
+                    Bus b1 = findBus(bno);
+                    if(b1 != null) b1.showSeats();
+                    else System.out.println("Bus not found!");
+                    break;
+
+                case 2:
+                    System.out.print("Enter Bus No: ");
+                    int b2 = sc.nextInt();
+                    Bus bus2 = findBus(b2);
+
+                    if(bus2 == null) {
+                        System.out.println("Bus not found!");
+                        break;
+                    }
+
+                    System.out.print("Enter Seat No: ");
+                    int sNo = sc.nextInt();
+                    sc.nextLine();
+
+                    System.out.print("Enter Name: ");
+                    String name = sc.nextLine();
+
+                    bus2.bookSeat(sNo, name);
+                    break;
+
+                case 3:
+                    System.out.print("Enter Bus No: ");
+                    int b3 = sc.nextInt();
+                    Bus bus3 = findBus(b3);
+
+                    if(bus3 == null) {
+                        System.out.println("Bus not found!");
+                        break;
+                    }
+
+                    System.out.print("Enter Seat No: ");
+                    int sNo2 = sc.nextInt();
+
+                    bus3.cancelSeat(sNo2);
+                    break;
+
+                case 4:
+                    System.out.println("Exiting...");
+                    return;
+
+                default:
+                    System.out.println("Invalid choice!");
+            }
+        }
+    }
+}
+
+public class Main{
+    public static void main(String[] args) {
+        BusSystem bs = new BusSystem();
+        bs.menu();
+    }
+}
