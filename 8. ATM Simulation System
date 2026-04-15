@@ -1,0 +1,153 @@
+import java.util.*;
+
+class Account {
+    private int accNo;
+    private int pin;
+    private double balance;
+    private ArrayList<String> history;
+    private double dailyWithdrawn;
+
+    public Account(int accNo, int pin, double balance) {
+        this.accNo = accNo;
+        this.pin = pin;
+        this.balance = balance;
+        history = new ArrayList<>();
+        dailyWithdrawn = 0;
+    }
+
+    public int getAccNo() { return accNo; }
+
+    public boolean authenticate(int inputPin) {
+        return this.pin == inputPin;
+    }
+
+    public void deposit(double amt) {
+        balance += amt;
+        history.add("Deposited: " + amt + " | Balance: " + balance);
+        System.out.println("Deposit successful!");
+    }
+
+    public void withdraw(double amt, double limit) {
+        if(amt > limit - dailyWithdrawn) {
+            System.out.println("Daily limit exceeded!");
+            return;
+        }
+
+        if(balance >= amt) {
+            balance -= amt;
+            dailyWithdrawn += amt;
+            history.add("Withdrawn: " + amt + " | Balance: " + balance);
+            System.out.println("Withdrawal successful!");
+        } else {
+            System.out.println("Insufficient balance!");
+        }
+    }
+
+    public void checkBalance() {
+        System.out.println("Balance: " + balance);
+    }
+
+    public void showMiniStatement() {
+        System.out.println("Mini Statement:");
+        for(String h : history) {
+            System.out.println(h);
+        }
+    }
+}
+
+class ATM {
+    private ArrayList<Account> accounts = new ArrayList<>();
+    private Scanner sc = new Scanner(System.in);
+    private final double DAILY_LIMIT = 10000;
+
+    public ATM() {
+        accounts.add(new Account(1001, 1234, 5000));
+        accounts.add(new Account(1002, 4321, 8000));
+    }
+
+    public Account findAccount(int accNo) {
+        for(Account a : accounts) {
+            if(a.getAccNo() == accNo)
+                return a;
+        }
+        return null;
+    }
+
+    public void login() {
+        System.out.print("Enter Account No: ");
+        int accNo = sc.nextInt();
+
+        Account acc = findAccount(accNo);
+        if(acc == null) {
+            System.out.println("Account not found!");
+            return;
+        }
+
+        int attempts = 3;
+
+        while(attempts > 0) {
+            System.out.print("Enter PIN: ");
+            int pin = sc.nextInt();
+
+            if(acc.authenticate(pin)) {
+                menu(acc);
+                return;
+            } else {
+                attempts--;
+                System.out.println("Wrong PIN! Attempts left: " + attempts);
+            }
+        }
+
+        System.out.println("Account locked!");
+    }
+
+    public void menu(Account acc) {
+        while(true) {
+            System.out.println("\n1. Deposit");
+            System.out.println("2. Withdraw");
+            System.out.println("3. Balance");
+            System.out.println("4. Mini Statement");
+            System.out.println("5. Exit");
+
+            System.out.print("Enter choice: ");
+            int ch = sc.nextInt();
+
+            switch(ch) {
+                case 1:
+                    System.out.print("Enter amount: ");
+                    double d = sc.nextDouble();
+                    if(d > 0) acc.deposit(d);
+                    else System.out.println("Invalid amount!");
+                    break;
+
+                case 2:
+                    System.out.print("Enter amount: ");
+                    double w = sc.nextDouble();
+                    if(w > 0) acc.withdraw(w, DAILY_LIMIT);
+                    else System.out.println("Invalid amount!");
+                    break;
+
+                case 3:
+                    acc.checkBalance();
+                    break;
+
+                case 4:
+                    acc.showMiniStatement();
+                    break;
+
+                case 5:
+                    return;
+
+                default:
+                    System.out.println("Invalid choice!");
+            }
+        }
+    }
+}
+
+public class Main {
+    public static void main(String[] args) {
+        ATM atm = new ATM();
+        atm.login();
+    }
+}
