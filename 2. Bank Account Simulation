@@ -1,0 +1,222 @@
+import java.util.*;
+
+class BankAccount {
+    private int accNo;
+    private String name;
+    private double balance;
+    private ArrayList<String> history;
+
+    public BankAccount(int accNo, String name, double balance) {
+        this.accNo = accNo;
+        this.name = name;
+        this.balance = balance;
+        history = new ArrayList<>();
+        history.add("Account created with balance: " + balance);
+    }
+
+    public int getAccNo() { return accNo; }
+    public double getBalance() { return balance; }
+
+    public void deposit(double amt) {
+        balance += amt;
+        history.add("Deposited: " + amt + " | Balance: " + balance);
+        System.out.println("Deposit successful!");
+    }
+
+    public void withdraw(double amt) {
+        if(balance >= amt) {
+            balance -= amt;
+            history.add("Withdrawn: " + amt + " | Balance: " + balance);
+            System.out.println("Withdrawal successful!");
+        } else {
+            System.out.println("Insufficient balance!");
+        }
+    }
+
+    public void transfer(BankAccount to, double amt) {
+        if(balance >= amt) {
+            balance -= amt;
+            to.balance += amt;
+
+            history.add("Transferred " + amt + " to Acc " + to.accNo);
+            to.history.add("Received " + amt + " from Acc " + accNo);
+
+            System.out.println("Transfer successful!");
+        } else {
+            System.out.println("Insufficient balance!");
+        }
+    }
+
+    public void display() {
+        System.out.println("\nAccount No: " + accNo);
+        System.out.println("Name: " + name);
+        System.out.println("Balance: " + balance);
+    }
+
+    public void showHistory() {
+        System.out.println("Transaction History:");
+        for(String h : history) {
+            System.out.println(h);
+        }
+    }
+}
+
+class BankSystem {
+    private ArrayList<BankAccount> accounts = new ArrayList<>();
+    private Scanner sc = new Scanner(System.in);
+
+    public BankAccount findAccount(int accNo) {
+        for(BankAccount a : accounts) {
+            if(a.getAccNo() == accNo)
+                return a;
+        }
+        return null;
+    }
+
+    public void createAccount() {
+        System.out.print("Enter Account No: ");
+        int accNo = sc.nextInt();
+        sc.nextLine();
+
+        if(findAccount(accNo) != null) {
+            System.out.println("Account already exists!");
+            return;
+        }
+
+        System.out.print("Enter Name: ");
+        String name = sc.nextLine();
+
+        System.out.print("Enter Initial Balance: ");
+        double bal = sc.nextDouble();
+
+        if(bal < 0) {
+            System.out.println("Invalid balance!");
+            return;
+        }
+
+        accounts.add(new BankAccount(accNo, name, bal));
+        System.out.println("Account created!");
+    }
+
+    public void depositMoney() {
+        System.out.print("Enter Account No: ");
+        int accNo = sc.nextInt();
+
+        BankAccount a = findAccount(accNo);
+        if(a == null) {
+            System.out.println("Account not found!");
+            return;
+        }
+
+        System.out.print("Enter amount: ");
+        double amt = sc.nextDouble();
+
+        if(amt <= 0) {
+            System.out.println("Invalid amount!");
+            return;
+        }
+
+        a.deposit(amt);
+    }
+
+    public void withdrawMoney() {
+        System.out.print("Enter Account No: ");
+        int accNo = sc.nextInt();
+
+        BankAccount a = findAccount(accNo);
+        if(a == null) {
+            System.out.println("Account not found!");
+            return;
+        }
+
+        System.out.print("Enter amount: ");
+        double amt = sc.nextDouble();
+
+        if(amt <= 0) {
+            System.out.println("Invalid amount!");
+            return;
+        }
+
+        a.withdraw(amt);
+    }
+
+    public void transferMoney() {
+        System.out.print("Enter Sender Account No: ");
+        int from = sc.nextInt();
+        System.out.print("Enter Receiver Account No: ");
+        int to = sc.nextInt();
+
+        BankAccount a1 = findAccount(from);
+        BankAccount a2 = findAccount(to);
+
+        if(a1 == null || a2 == null) {
+            System.out.println("Invalid accounts!");
+            return;
+        }
+
+        System.out.print("Enter amount: ");
+        double amt = sc.nextDouble();
+
+        if(amt <= 0) {
+            System.out.println("Invalid amount!");
+            return;
+        }
+
+        a1.transfer(a2, amt);
+    }
+
+    public void viewAccount() {
+        System.out.print("Enter Account No: ");
+        int accNo = sc.nextInt();
+
+        BankAccount a = findAccount(accNo);
+        if(a == null) {
+            System.out.println("Account not found!");
+            return;
+        }
+
+        a.display();
+        a.showHistory();
+    }
+}
+
+public class Main {
+    public static void main(String[] args) {
+        Scanner sc = new Scanner(System.in);
+        BankSystem bs = new BankSystem();
+
+        while(true) {
+            System.out.println("\n===== BANK SYSTEM =====");
+            System.out.println("1. Create Account");
+            System.out.println("2. Deposit");
+            System.out.println("3. Withdraw");
+            System.out.println("4. Transfer");
+            System.out.println("5. View Account");
+            System.out.println("6. Exit");
+
+            System.out.print("Enter choice: ");
+
+            int ch;
+            try {
+                ch = sc.nextInt();
+            } catch(Exception e) {
+                System.out.println("Invalid input!");
+                sc.nextLine();
+                continue;
+            }
+
+            switch(ch) {
+                case 1: bs.createAccount(); break;
+                case 2: bs.depositMoney(); break;
+                case 3: bs.withdrawMoney(); break;
+                case 4: bs.transferMoney(); break;
+                case 5: bs.viewAccount(); break;
+                case 6:
+                    System.out.println("Exiting...");
+                    return;
+                default:
+                    System.out.println("Invalid choice!");
+            }
+        }
+    }
+}
